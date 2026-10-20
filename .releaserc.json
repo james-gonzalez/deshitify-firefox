@@ -1,0 +1,17 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "path": "deshitify-firefox.sh", "label": "deshitify-firefox.sh" },
+          { "path": "deshitify-firefox.ps1", "label": "deshitify-firefox.ps1" },
+          { "path": "deshitify-firefox-linux.sh", "label": "deshitify-firefox-linux.sh" }
+        ]
+      }
+    ]
+  ]
+}

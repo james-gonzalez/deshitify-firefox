@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Syntax check
+        run: |
+          bash -n deshitify-firefox.sh
+          bash -n deshitify-firefox-linux.sh
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: '.'
+          severity: warning
+
+      - name: Dry-run smoke test (non-macOS guard)
+        run: |
+          # Should fail cleanly with a friendly message on non-macOS runners.
+          if ./deshitify-firefox.sh --dry-run; then
+            echo "Expected the macOS guard to reject a non-Darwin runner" >&2
+            exit 1
+          fi
+
+      - name: Dry-run smoke test (Linux)
+        run: |
+          ./deshitify-firefox-linux.sh --dry-run
+          ./deshitify-firefox-linux.sh --dry-run | tail -n +3 | python3 -m json.tool > /dev/null
+          ./deshitify-firefox-linux.sh --dry-run --aggressive | tail -n +3 | python3 -m json.tool > /dev/null
+          ./deshitify-firefox-linux.sh --dry-run --performance | tail -n +3 | python3 -m json.tool > /dev/null
+          ./deshitify-firefox-linux.sh --dry-run --aggressive --paranoid --performance | tail -n +3 | python3 -m json.tool > /dev/null
+
+      - name: --skip, --show and --install-dir smoke test (Linux)
+        run: |
+          out="$(./deshitify-firefox-linux.sh --dry-run --performance --skip NetworkPrediction --skip=browser.tabs.unloadOnLowMemory,IPProtectionAvailable)"
+          if grep -Eq 'NetworkPrediction|unloadOnLowMemory|IPProtectionAvailable' <<<"$out"; then
+            echo "--skip left a skipped key in the output" >&2
+            exit 1
+          fi
+          grep -q 'min_inactive_duration_before_unload' <<<"$out"
+          tail -n +3 <<<"$out" | python3 -m json.tool > /dev/null
+          # Skipping every default pref must drop the Preferences policy, not leave it empty.
+          prefs="browser.vpn_promo.enabled,browser.contentblocking.report.hide_vpn_banner,browser.contentblocking.report.show_mobile_app,browser.discovery.enabled,media.peerconnection.ice.default_address_only,network.http.speculative-parallel-limit,browser.urlbar.speculativeConnect.enabled"
+          out="$(./deshitify-firefox-linux.sh --dry-run --skip "$prefs")"
+          if grep -q Preferences <<<"$out"; then
+            echo "Expected no Preferences policy once every pref is skipped" >&2
+            exit 1
+          fi
+          tail -n +3 <<<"$out" | python3 -m json.tool > /dev/null
+          if ./deshitify-firefox-linux.sh --dry-run --skip NotARealPolicy; then
+            echo "Expected --skip to reject an unknown policy name" >&2
+            exit 1
+          fi
+          ./deshitify-firefox-linux.sh --dry-run --install-dir /opt/firefox | grep -q 'Would write to: /opt/firefox/distribution/policies.json'
+          ./deshitify-firefox-linux.sh --show
+
+  macos:
+    name: macOS script
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Dry-run produces a valid plist for every tier
+        run: |
+          for flags in "" "--aggressive" "--paranoid" "--performance" "--aggressive --paranoid --performance"; do
+            # shellcheck disable=SC2086
+            ./deshitify-firefox.sh --dry-run $flags | tail -n +3 | plutil -lint -
+          done
+
+      - name: --skip and --show smoke test
+        run: |
+          out="$(./deshitify-firefox.sh --dry-run --performance --skip NetworkPrediction --skip=browser.tabs.unloadOnLowMemory,IPProtectionAvailable)"
+          if grep -Eq 'NetworkPrediction|unloadOnLowMemory|IPProtectionAvailable' <<<"$out"; then
+            echo "--skip left a skipped key in the output" >&2
+            exit 1
+          fi
+          tail -n +3 <<<"$out" | plutil -lint -
+          if ./deshitify-firefox.sh --dry-run --skip NotARealPolicy; then
+            echo "Expected --skip to reject an unknown policy name" >&2
+            exit 1
+          fi
+          ./deshitify-firefox.sh --show
+
+  validate-policies:
+    name: Policy validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Offline checks (tier parity, undo coverage)
+        run: python3 tests/validate-policies.py
+
+      - name: Cross-reference policies and prefs against upstream Firefox source
+        run: python3 tests/validate-policies.py --online
+
+  lint-windows:
+    name: PSScriptAnalyzer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Syntax check
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("deshitify-firefox.ps1", [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          # Write-Host is intentional here (interactive CLI tool, not a pipeline function).
+          $results = Invoke-ScriptAnalyzer -Path deshitify-firefox.ps1 -Severity Warning `
+            -ExcludeRule PSAvoidUsingWriteHost
+          $results | Format-Table -AutoSize
+          if ($results) { exit 1 }
+
+      - name: Dry-run smoke test (pwsh)
+        shell: pwsh
+        run: |
+          $out = .\deshitify-firefox.ps1 -DryRun -Aggressive -Paranoid -Performance *>&1 | Out-String
+          $out
+          if ($out -notmatch [regex]::Escape('[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox\UserMessaging]')) { Write-Error 'Expected the UserMessaging subkey'; exit 1 }
+          if ($out -notmatch [regex]::Escape('[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox\AIControls\Default]')) { Write-Error 'Expected the nested AIControls\Default subkey'; exit 1 }
+          # Preferences must be a JSON string that parses.
+          $line = ($out -split "`r?`n") | Where-Object { $_ -like '"Preferences"=*' } | Select-Object -First 1
+          if (-not $line) { Write-Error 'Expected a Preferences value'; exit 1 }
+          $json = ($line -replace '^"Preferences"="', '' -replace '"$', '') -replace '\\"', '"' -replace '\\\\', '\'
+          $prefs = $json | ConvertFrom-Json
+          if (-not $prefs.'browser.vpn_promo.enabled') { Write-Error 'Expected browser.vpn_promo.enabled in Preferences' }
+
+      - name: Dry-run smoke test (Windows PowerShell 5.1)
+        shell: powershell
+        run: .\deshitify-firefox.ps1 -DryRun
+
+      - name: -Skip and -Show smoke test
+        shell: pwsh
+        run: |
+          $out = .\deshitify-firefox.ps1 -DryRun -Performance -Skip NetworkPrediction,IPProtectionAvailable,browser.tabs.unloadOnLowMemory *>&1 | Out-String
+          if ($out -match 'NetworkPrediction|IPProtectionAvailable|unloadOnLowMemory') { Write-Error '-Skip left a skipped key in the output'; exit 1 }
+          if ($out -notmatch 'min_inactive_duration_before_unload') { Write-Error 'Expected the other keys to remain'; exit 1 }
+          .\deshitify-firefox.ps1 -Show
