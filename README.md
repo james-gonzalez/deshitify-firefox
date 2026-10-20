@@ -75,13 +75,18 @@ Most entries are Firefox **policies**. Where no policy exists, the script sets a
 
 | Feature | Policy / pref |
 | --- | --- |
-| Sponsored top sites, sponsored and recommended stories on the New Tab page | `FirefoxHome` |
+| Sponsored top sites, sponsored and recommended stories, and the weather widget (which sends your location to Mozilla) on the New Tab page | `FirefoxHome` |
 | AI features: chatbot sidebar, link-preview summaries, smart tab groups, PDF alt text, smart windows, speech recognition (local Translations stay available) | `AIControls` |
 | IP Protection (Mozilla's built-in VPN) | `IPProtectionAvailable` |
 | "What's New" prompts, extension and feature recommendations, address-bar interventions, onboarding, "More from Mozilla" | `UserMessaging` |
 | VPN promo | `browser.vpn_promo.enabled` |
 | VPN banner in the Protections report | `browser.contentblocking.report.hide_vpn_banner` |
 | Mobile-app promo in the Protections report | `browser.contentblocking.report.show_mobile_app` |
+| Firefox Relay promo | `browser.promo.relay.enabled` |
+| "Pin to dock" promo | `browser.promo.pin.enabled` |
+| VPN, Monitor and Relay entries in the account menu | `identity.fxaccounts.toolbar.pxiToolbarEnabled` |
+| Recommendations on the add-ons page | `extensions.htmlaboutaddons.recommendations.enabled` |
+| Relay email-mask offers in login fields | `signon.firefoxRelay.feature` |
 
 **Telemetry**
 
@@ -160,9 +165,11 @@ than Brave's.
 | --- | --- |
 | Keeps tab unloading on when memory runs low | `browser.tabs.unloadOnLowMemory` |
 | Lets a background tab unload after 5 idle minutes instead of 10 | `browser.tabs.min_inactive_duration_before_unload` |
+| Saves the session once a minute instead of every 15 seconds (less disk writing) | `browser.sessionstore.interval` |
 
 An unloaded tab stays in the strip but is fully released. Switching back
-reloads it, and unsaved form input in that tab is lost.
+reloads it, and unsaved form input in that tab is lost. After a crash you can
+lose up to a minute of session state.
 
 ### Deliberately not touched
 

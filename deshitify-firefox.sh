@@ -107,15 +107,21 @@ fi
 # would otherwise read a 0 or 1 as a boolean.
 
 # --- Core: kill the upsell surfaces (sponsored tiles and stories, AI features, IP Protection VPN,
-# What's New, extension/feature recommendations, "More from Mozilla", VPN promo, mobile-app promo)
+# What's New, extension/feature recommendations, "More from Mozilla", VPN/Relay/pin promos, account-menu
+# VPN/Monitor/Relay entries, add-on page recommendations, Relay mask offers, New Tab weather)
 CORE_KEYS=$(cat <<'CORE_JSON'
-  "FirefoxHome": {"Stories": false, "SponsoredStories": false, "SponsoredTopSites": false, "Locked": true},
+  "FirefoxHome": {"Stories": false, "SponsoredStories": false, "SponsoredTopSites": false, "Weather": false, "Locked": true},
   "AIControls": {"Default": {"Value": "blocked", "Locked": true}, "Translations": {"Value": "available"}},
   "IPProtectionAvailable": false,
   "UserMessaging": {"WhatsNew": false, "ExtensionRecommendations": false, "FeatureRecommendations": false, "UrlbarInterventions": false, "SkipOnboarding": true, "MoreFromMozilla": false, "Locked": true},
   "pref:browser.vpn_promo.enabled": {"Value": false, "Status": "locked"},
   "pref:browser.contentblocking.report.hide_vpn_banner": {"Value": true, "Status": "locked"},
   "pref:browser.contentblocking.report.show_mobile_app": {"Value": false, "Status": "locked"},
+  "pref:browser.promo.relay.enabled": {"Value": false, "Status": "locked"},
+  "pref:browser.promo.pin.enabled": {"Value": false, "Status": "locked"},
+  "pref:identity.fxaccounts.toolbar.pxiToolbarEnabled": {"Value": false, "Status": "locked"},
+  "pref:extensions.htmlaboutaddons.recommendations.enabled": {"Value": false, "Status": "locked"},
+  "pref:signon.firefoxRelay.feature": {"Value": "disabled", "Status": "locked"},
 CORE_JSON
 )
 
@@ -181,12 +187,14 @@ PARANOID_KEYS=$(cat <<'PARANOID_JSON'
 PARANOID_JSON
 )
 
-# --- Performance tier (opt-in): unload idle background tabs after 5 minutes instead of 10. An
-# unloaded tab stays in the strip but reloads when you switch back, and unsaved form input in it
-# is lost.
+# --- Performance tier (opt-in): unload idle background tabs after 5 minutes instead of 10, and save
+# the session once a minute instead of every 15 seconds. An unloaded tab stays in the strip but
+# reloads when you switch back, and unsaved form input in it is lost. After a crash you can lose
+# up to a minute of session state.
 PERFORMANCE_KEYS=$(cat <<'PERFORMANCE_JSON'
   "pref:browser.tabs.unloadOnLowMemory": {"Value": true, "Status": "locked"},
   "pref:browser.tabs.min_inactive_duration_before_unload": {"Value": 300000, "Status": "locked", "Type": "number"},
+  "pref:browser.sessionstore.interval": {"Value": 60000, "Status": "locked", "Type": "number"},
 PERFORMANCE_JSON
 )
 

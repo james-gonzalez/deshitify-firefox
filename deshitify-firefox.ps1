@@ -80,15 +80,21 @@ $PolicyKeyDisplay = 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox'
 # A numeric pref sets Number, because Firefox would otherwise read a 0 or 1 as a boolean.
 
 # --- Core: kill the upsell surfaces (sponsored tiles and stories, AI features, IP Protection VPN,
-# What's New, extension/feature recommendations, "More from Mozilla", VPN promo, mobile-app promo)
+# What's New, extension/feature recommendations, "More from Mozilla", VPN/Relay/pin promos, account-menu
+# VPN/Monitor/Relay entries, add-on page recommendations, Relay mask offers, New Tab weather)
 $CoreKeys = [ordered]@{
-    FirefoxHome           = @{ Type = 'Key'; Items = [ordered]@{ Stories = @{ Type = 'DWord'; Value = 0 }; SponsoredStories = @{ Type = 'DWord'; Value = 0 }; SponsoredTopSites = @{ Type = 'DWord'; Value = 0 }; Locked = @{ Type = 'DWord'; Value = 1 } } }
+    FirefoxHome           = @{ Type = 'Key'; Items = [ordered]@{ Stories = @{ Type = 'DWord'; Value = 0 }; SponsoredStories = @{ Type = 'DWord'; Value = 0 }; SponsoredTopSites = @{ Type = 'DWord'; Value = 0 }; Weather = @{ Type = 'DWord'; Value = 0 }; Locked = @{ Type = 'DWord'; Value = 1 } } }
     AIControls            = @{ Type = 'Key'; Items = [ordered]@{ Default = @{ Type = 'Key'; Items = [ordered]@{ Value = @{ Type = 'String'; Value = 'blocked' }; Locked = @{ Type = 'DWord'; Value = 1 } } }; Translations = @{ Type = 'Key'; Items = [ordered]@{ Value = @{ Type = 'String'; Value = 'available' } } } } }
     IPProtectionAvailable = @{ Type = 'DWord'; Value = 0 }
     UserMessaging         = @{ Type = 'Key'; Items = [ordered]@{ WhatsNew = @{ Type = 'DWord'; Value = 0 }; ExtensionRecommendations = @{ Type = 'DWord'; Value = 0 }; FeatureRecommendations = @{ Type = 'DWord'; Value = 0 }; UrlbarInterventions = @{ Type = 'DWord'; Value = 0 }; SkipOnboarding = @{ Type = 'DWord'; Value = 1 }; MoreFromMozilla = @{ Type = 'DWord'; Value = 0 }; Locked = @{ Type = 'DWord'; Value = 1 } } }
     'pref:browser.vpn_promo.enabled'                      = @{ Type = 'Pref'; Value = $false }
     'pref:browser.contentblocking.report.hide_vpn_banner' = @{ Type = 'Pref'; Value = $true }
     'pref:browser.contentblocking.report.show_mobile_app' = @{ Type = 'Pref'; Value = $false }
+    'pref:browser.promo.relay.enabled'                    = @{ Type = 'Pref'; Value = $false }
+    'pref:browser.promo.pin.enabled'                      = @{ Type = 'Pref'; Value = $false }
+    'pref:identity.fxaccounts.toolbar.pxiToolbarEnabled'  = @{ Type = 'Pref'; Value = $false }
+    'pref:extensions.htmlaboutaddons.recommendations.enabled' = @{ Type = 'Pref'; Value = $false }
+    'pref:signon.firefoxRelay.feature'                    = @{ Type = 'Pref'; Value = 'disabled' }
 }
 
 # --- Privacy: stop the phone-home pings (telemetry, Shield studies, feedback menus, personalised
@@ -148,12 +154,14 @@ $ParanoidKeys = [ordered]@{
     'pref:browser.safebrowsing.downloads.remote.enabled' = @{ Type = 'Pref'; Value = $false }
 }
 
-# --- Performance tier (opt-in): unload idle background tabs after 5 minutes instead of 10. An
-# unloaded tab stays in the strip but reloads when you switch back, and unsaved form input in it
-# is lost.
+# --- Performance tier (opt-in): unload idle background tabs after 5 minutes instead of 10, and save
+# the session once a minute instead of every 15 seconds. An unloaded tab stays in the strip but
+# reloads when you switch back, and unsaved form input in it is lost. After a crash you can lose
+# up to a minute of session state.
 $PerformanceKeys = [ordered]@{
     'pref:browser.tabs.unloadOnLowMemory'                    = @{ Type = 'Pref'; Value = $true }
     'pref:browser.tabs.min_inactive_duration_before_unload'  = @{ Type = 'Pref'; Value = 300000; Number = $true }
+    'pref:browser.sessionstore.interval'                     = @{ Type = 'Pref'; Value = 60000; Number = $true }
 }
 
 $Policies = [ordered]@{}
