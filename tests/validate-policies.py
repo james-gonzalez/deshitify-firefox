@@ -165,6 +165,11 @@ for tier in TIERS:
         fail(f"{tier}: the macOS and Linux scripts have different {tier.upper()}_KEYS blocks")
 print("  macOS and Linux policy blocks are identical")
 
+# Firefox ignores the macOS plist entirely without this switch, and nothing else flags it.
+if not re.search(r'EnterprisePoliciesEnabled\\?": true', (REPO / "deshitify-firefox.sh").read_text()):
+    fail("macOS script doesn't set EnterprisePoliciesEnabled, so Firefox would ignore the plist")
+print("  macOS script enables the policy engine")
+
 # Compare policy names, nested values and prefs across scripts, minus documented exceptions.
 for tier in TIERS:
     flat = {

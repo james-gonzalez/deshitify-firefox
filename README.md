@@ -202,7 +202,7 @@ Settings. Each script writes the policy to the platform's standard location:
 
 | OS | Location |
 | --- | --- |
-| macOS | `/Library/Managed Preferences/<you>/org.mozilla.firefox.plist` |
+| macOS | `/Library/Managed Preferences/<you>/org.mozilla.firefox.plist` (needs `EnterprisePoliciesEnabled`, which the script sets) |
 | Linux | `/etc/firefox/policies/policies.json` |
 | Windows | `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox` |
 

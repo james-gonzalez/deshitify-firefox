@@ -236,6 +236,11 @@ ${PREF_LINES}
   },"
 fi
 
+# Firefox ignores the whole plist on macOS unless this switch is on (nsIMacPreferencesReader
+# .policiesEnabled). It isn't a schema policy, so it lives here rather than in a tier.
+BODY="  \"EnterprisePoliciesEnabled\": true,
+${BODY}"
+
 # Strip the trailing comma off the last entry so the object is valid JSON.
 BODY="$(echo "$BODY" | sed '$ s/,$//')"
 
