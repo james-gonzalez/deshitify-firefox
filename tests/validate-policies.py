@@ -31,6 +31,10 @@ POLICIES_URL = RAW + "browser/components/enterprisepolicies/Policies.sys.mjs"
 PREF_FILES = [RAW + "browser/app/profile/firefox.js",
               RAW + "modules/libpref/init/all.js",
               RAW + "modules/libpref/init/StaticPrefList.yaml"]
+# New Tab declares its prefs relative to this prefix, in its own file, and derives
+# "feeds.<name>" prefs from each feed's name.
+NEWTAB_PREFIX = "browser.newtabpage.activity-stream."
+NEWTAB_URL = RAW + "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
 
 TIERS = ["Core", "Privacy", "Nag", "Leak", "Perf", "Aggressive", "Paranoid", "Performance"]
 OPT_IN = ["Aggressive", "Paranoid", "Performance"]
@@ -217,6 +221,7 @@ else:
     schema = json.loads(get(SCHEMA_URL))["properties"]
     policies_src = get(POLICIES_URL)
     pref_src = "\n".join(get(u) for u in PREF_FILES)
+    newtab_src = get(NEWTAB_URL)
 
     def major(v):
         return int(str(v).split(".")[0])
@@ -273,6 +278,12 @@ else:
         elif not any(name.startswith(p) for p in pref_prefixes):
             return "outside the Preferences policy's allowed prefixes (silently dropped)"
         in_js = f'"{name}"' in pref_src
+        if name.startswith(NEWTAB_PREFIX):
+            rel = name[len(NEWTAB_PREFIX):]
+            if rel.startswith("feeds."):
+                in_js = in_js or re.search(r'name:\s*"' + re.escape(rel[6:]) + '"', newtab_src)
+            else:
+                in_js = in_js or f'"{rel}"' in newtab_src
         in_yaml = re.search(r"name:\s*" + re.escape(name) + r"\s*$", pref_src, re.M)
         if not (in_js or in_yaml):
             return "no such pref in Firefox's pref definitions"
