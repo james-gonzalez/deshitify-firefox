@@ -1,0 +1,52 @@
+name: Upstream policy check
+
+# Firefox renames and drops policies and prefs over time. A policy or pref that
+# stops working still shows up fine in about:policies, so check against upstream
+# weekly and open an issue when the validator starts failing.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate-online:
+    name: Validate keys against upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Cross-reference policies and prefs against upstream Firefox source
+        id: validate
+        continue-on-error: true
+        run: python3 tests/validate-policies.py --online 2>&1 | tee validate.log; exit "${PIPESTATUS[0]}"
+
+      - name: Open an issue if validation failed
+        if: steps.validate.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Upstream policy check failing"
+          if [ -n "$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[].number')" ]; then
+            echo "An open issue already exists; not creating another."
+            exit 0
+          fi
+          {
+            echo "The weekly \`validate-policies.py --online\` run failed, so a policy or pref may have been renamed, removed or deprecated upstream."
+            echo
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo '```'
+            tail -n 40 validate.log
+            echo '```'
+          } > body.md
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file body.md
+
+      - name: Fail the run if validation failed
+        if: steps.validate.outcome == 'failure'
+        run: exit 1
