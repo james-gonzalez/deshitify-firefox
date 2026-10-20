@@ -51,7 +51,7 @@ jobs:
           grep -q 'min_inactive_duration_before_unload' <<<"$out"
           tail -n +3 <<<"$out" | python3 -m json.tool > /dev/null
           # Skipping every default pref must drop the Preferences policy, not leave it empty.
-          prefs="browser.vpn_promo.enabled,browser.contentblocking.report.hide_vpn_banner,browser.contentblocking.report.show_mobile_app,browser.discovery.enabled,media.peerconnection.ice.default_address_only,network.http.speculative-parallel-limit,browser.urlbar.speculativeConnect.enabled"
+          prefs="browser.vpn_promo.enabled,browser.contentblocking.report.hide_vpn_banner,browser.contentblocking.report.show_mobile_app,browser.discovery.enabled,browser.newtabpage.activity-stream.telemetry,browser.newtabpage.activity-stream.feeds.telemetry,browser.search.serpEventTelemetryCategorization.enabled,browser.promo.relay.enabled,browser.promo.pin.enabled,identity.fxaccounts.toolbar.pxiToolbarEnabled,extensions.htmlaboutaddons.recommendations.enabled,signon.firefoxRelay.feature,media.peerconnection.ice.default_address_only,network.http.speculative-parallel-limit,browser.urlbar.speculativeConnect.enabled"
           out="$(./deshitify-firefox-linux.sh --dry-run --skip "$prefs")"
           if grep -q Preferences <<<"$out"; then
             echo "Expected no Preferences policy once every pref is skipped" >&2
