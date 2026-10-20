@@ -98,7 +98,7 @@ Most entries are Firefox **policies**. Where no policy exists, the script sets a
 | What it stops | Policy |
 | --- | --- |
 | "Make Firefox your default browser" prompt | `DontCheckDefaultBrowser` |
-| Terms of Use notice on startup | `SkipTermsOfUse` |
+| Terms of Use notice on startup (Firefox records it as accepted, so this skips the prompt rather than leaving it unanswered) | `SkipTermsOfUse` |
 | First-run page | `OverrideFirstRunPage` |
 | Post-update page | `OverridePostUpdatePage` |
 
