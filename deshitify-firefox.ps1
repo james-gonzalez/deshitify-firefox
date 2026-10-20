@@ -98,13 +98,16 @@ $CoreKeys = [ordered]@{
 }
 
 # --- Privacy: stop the phone-home pings (telemetry, Shield studies, feedback menus, personalised
-# add-on discovery, and the Windows default-browser agent)
+# add-on discovery, New Tab and search-results telemetry, and the Windows default-browser agent)
 $PrivacyKeys = [ordered]@{
     DisableTelemetry            = @{ Type = 'DWord'; Value = 1 }
     DisableFirefoxStudies       = @{ Type = 'DWord'; Value = 1 }
     DisableFeedbackCommands     = @{ Type = 'DWord'; Value = 1 }
     DisableDefaultBrowserAgent  = @{ Type = 'DWord'; Value = 1 }
     'pref:browser.discovery.enabled' = @{ Type = 'Pref'; Value = $false }
+    'pref:browser.newtabpage.activity-stream.telemetry'       = @{ Type = 'Pref'; Value = $false }
+    'pref:browser.newtabpage.activity-stream.feeds.telemetry' = @{ Type = 'Pref'; Value = $false }
+    'pref:browser.search.serpEventTelemetryCategorization.enabled' = @{ Type = 'Pref'; Value = $false }
 }
 
 # --- Nag suppression: default-browser prompt, Terms of Use notice, first-run and post-update pages

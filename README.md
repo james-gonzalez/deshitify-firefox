@@ -71,6 +71,10 @@ Most entries are Firefox **policies**. Where no policy exists, the script sets a
 
 ### Core (always applied)
 
+Core is the default run, with no flags. It is meant to leave you a fast, ordinary
+browser with the day-to-day features intact: the upsells, telemetry, nags and
+leaks below are off, and nothing you use daily is removed.
+
 **Upsell surfaces**
 
 | Feature | Policy / pref |
@@ -96,6 +100,8 @@ Most entries are Firefox **policies**. Where no policy exists, the script sets a
 | Studies (Shield) | `DisableFirefoxStudies` |
 | "Submit Feedback" and "Report Deceptive Site" menus | `DisableFeedbackCommands` |
 | Personalised add-on discovery | `browser.discovery.enabled` |
+| New Tab telemetry | `browser.newtabpage.activity-stream.telemetry`, `browser.newtabpage.activity-stream.feeds.telemetry` |
+| Search-results page categorisation telemetry | `browser.search.serpEventTelemetryCategorization.enabled` |
 | Default-browser agent (Windows only) | `DisableDefaultBrowserAgent` |
 
 **Nags**

@@ -126,12 +126,15 @@ CORE_JSON
 )
 
 # --- Privacy: stop the phone-home pings (telemetry, Shield studies, feedback menus, personalised
-# add-on discovery)
+# add-on discovery, New Tab and search-results telemetry)
 PRIVACY_KEYS=$(cat <<'PRIVACY_JSON'
   "DisableTelemetry": true,
   "DisableFirefoxStudies": true,
   "DisableFeedbackCommands": true,
   "pref:browser.discovery.enabled": {"Value": false, "Status": "locked"},
+  "pref:browser.newtabpage.activity-stream.telemetry": {"Value": false, "Status": "locked"},
+  "pref:browser.newtabpage.activity-stream.feeds.telemetry": {"Value": false, "Status": "locked"},
+  "pref:browser.search.serpEventTelemetryCategorization.enabled": {"Value": false, "Status": "locked"},
 PRIVACY_JSON
 )
 
